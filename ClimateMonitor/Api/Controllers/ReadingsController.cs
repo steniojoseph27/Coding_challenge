@@ -60,6 +60,8 @@ public class ReadingsController : ControllerBase
                 return BadRequest(problemDetails);
             }
 
-            return Ok(_alertService.GetAlerts(deviceReadingRequest));
+        // Issue 3: evaluate alerts from readings
+            var alerts = _alertService.GetAlerts(deviceReadingRequest);
+            return Ok(alerts);
     }
 }
