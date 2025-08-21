@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ClimateMonitor.Services;
 using ClimateMonitor.Services.Models;
+using System.Text.RegularExpressions;
 
 namespace ClimateMonitor.Api.Controllers;
 
@@ -33,17 +34,17 @@ public class ReadingsController : ControllerBase
     /// <param name="deviceSecret">A unique identifier on the device included in the header(x-device-shared-secret).</param>
     /// <param name="deviceReadingRequest">Sensor information and extra metadata from device.</param>
     [HttpPost("evaluate")]
-    public ActionResult<IEnumerable<Alert>> EvaluateReading(
-        string deviceSecret,
-        [FromBody] DeviceReadingRequest deviceReadingRequest)
-    {
-        if (!_secretValidator.ValidateDeviceSecret(deviceSecret))
+    public IActionResult Evaluate([FromBody] DeviceReadingRequest deviceReadingRequest)
         {
-            return Problem(
+            // Issue 1: validate secret header
+            if (!Request.Headers.TryGetValue("x-device-shared-secret", out var deviceSecret) ||
+                !_secretValidator.ValidateDeviceSecret(deviceSecret!))
+            {
+                return Problem(
                 detail: "Device secret is not within the valid range.",
                 statusCode: StatusCodes.Status401Unauthorized);
-        }
+            }
 
-        return Ok(_alertService.GetAlerts(deviceReadingRequest));
+            
     }
 }
