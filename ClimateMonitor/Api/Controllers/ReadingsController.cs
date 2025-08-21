@@ -45,6 +45,21 @@ public class ReadingsController : ControllerBase
                 statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            
+            // Issue 2: validate firmware version
+            var semverRegex = new Regex(@"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9azA-Z-]+)*))?$");
+            if (!semverRegex.IsMatch(deviceReadingRequest.FirmwareVersion))
+            {
+                var problemDetails = new ValidationProblemDetails(new Dictionary<string, string[]>
+                {
+                    { "FirmwareVersion", new[] { "The firmware value does not match semantic versioning format." } }
+                })
+                {
+                    Status = StatusCodes.Status400BadRequest
+                };
+
+                return BadRequest(problemDetails);
+            }
+
+            return Ok(_alertService.GetAlerts(deviceReadingRequest));
     }
 }
